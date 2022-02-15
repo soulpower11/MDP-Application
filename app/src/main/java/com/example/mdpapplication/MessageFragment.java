@@ -4,13 +4,22 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.text.Editable;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
+import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,14 +46,17 @@ public class MessageFragment extends Fragment {
     TextInputLayout tInput;
 
     BluetoothConnectionHelper bluetooth;
-    String msgLog, sendMsg;
+    String sendMsg;
+    SpannableStringBuilder msgLog;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        LayoutInflater lf = getActivity().getLayoutInflater();
-        View view =  lf.inflate(R.layout.fragment_message, container, false); //pass the correct layout name for the fragment
+        return inflater.inflate(R.layout.fragment_message, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 
         btn_send = view.findViewById(R.id.btn_send);
         btn_clear = view.findViewById(R.id.btn_clear);
@@ -57,11 +69,11 @@ public class MessageFragment extends Fragment {
         context.registerReceiver(mMessageReceiver, new IntentFilter(EVENT_MESSAGE_SENT));
 
         tView.setText("Application Started");
-        msgLog = "";
+        msgLog = new SpannableStringBuilder();
 
         if(savedInstanceState != null){
-            msgLog = savedInstanceState.getString(STATE_LOG);
-            if(msgLog != ""){
+            msgLog = new SpannableStringBuilder(Html.fromHtml(savedInstanceState.getString(STATE_LOG),0));
+            if(msgLog.length() != 0){
                 tView.setText(msgLog);
             }
         }
@@ -75,7 +87,7 @@ public class MessageFragment extends Fragment {
             public void beforeTextChanged(CharSequence s, int start,
                                           int count, int after) {}
 
-            public void onTextChanged(CharSequence s, int start,
+            public void onTextChanged(@NonNull CharSequence s, int start,
                                       int before, int count) {
                 //get the String from CharSequence with s.toString() and process it to validation
                 sendMsg = s.toString();
@@ -99,21 +111,16 @@ public class MessageFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 tView.setText("");
-                msgLog = "";
+                msgLog.clear();
                 showToast("Message log cleared!");
             }
         });
-
-        return view;
     }
 
     private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(Context context, @NonNull Intent intent) {
             // Get extra data included in the Intent
-            DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-            Date date = new Date();
-
             if(intent.getAction().equals(EVENT_MESSAGE_RECEIVED)){
                 String message = intent.getStringExtra("key");
                 logMsg("Message Received: " + message);
@@ -126,10 +133,70 @@ public class MessageFragment extends Fragment {
     };
 
     public void logMsg(String message){
-        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-        Date date = new Date();
-        msgLog += "[" + dateFormat.format(date)+ "] " + message + "\n";
-        tView.setText(msgLog);
+        try {
+            DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+            Date date = new Date();
+            SpannableString styledResultText;
+
+            //msgLog += "[" + dateFormat.format(date)+ "] " + message + "\n";
+            message = "[" + dateFormat.format(date)+ "] " + message + "\n";
+            styledResultText = new SpannableString(message);
+
+            if(message.contains("Message Received:")){
+
+//                styledResultText.setSpan(
+//                        new AlignmentSpan.Standard(Layout.Alignment.ALIGN_NORMAL),
+//                        0,
+//                        message.length(),
+//                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+//                );
+                String length = "[" + dateFormat.format(date)+ "] Message Received:";
+
+                styledResultText.setSpan(
+                        new ForegroundColorSpan(Color.GRAY),
+                        0,
+                        length.lastIndexOf(":") + 1,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                );
+
+//                styledResultText.setSpan(
+//                        new RelativeSizeSpan(2f),
+//                        message.lastIndexOf(":") + 2,
+//                        message.length(),
+//                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+//                );
+
+            }else{
+//                styledResultText.setSpan(
+//                        new AlignmentSpan.Standard(Layout.Alignment.ALIGN_OPPOSITE),
+//                        0,
+//                        message.length(),
+//                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+//                );
+
+                String length = "[" + dateFormat.format(date)+ "] Message Sent:";
+
+                styledResultText.setSpan(
+                        new ForegroundColorSpan(Color.DKGRAY),
+                        0,
+                        length.lastIndexOf(":") + 1,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                );
+
+//                styledResultText.setSpan(
+//                        new RelativeSizeSpan(2f),
+//                        message.lastIndexOf(":") + 2,
+//                        message.length(),
+//                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+//                );
+            }
+
+            msgLog.append(styledResultText);
+
+            tView.setText(msgLog,  TextView.BufferType.SPANNABLE);
+
+        }catch (Exception e){
+        }
     }
 
     //toast message function
@@ -138,10 +205,53 @@ public class MessageFragment extends Fragment {
     }
 
     @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        savedInstanceState.putString(STATE_LOG, msgLog);
+    public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
+        String log = Html.toHtml(msgLog, 0);
+
+        if (log.length() != 0) {
+            log = log.replace("<p dir=\"ltr\">", "");
+            log = log.replace("</p>", "");
+        }
+
+        savedInstanceState.putString(STATE_LOG, log);
 
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(savedInstanceState);
+    }
+
+    @Override
+    public void onStart() {
+        Log.d(TAG, "onStart: ");
+        super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        Log.d(TAG, "onResume: ");
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        Log.d(TAG, "onPause: ");
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        Log.d(TAG, "onStop: ");
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy: ");
+        super.onDestroy();
+    }
+
+    @Override
+    public void onDetach() {
+        Log.d(TAG, "onDetach: ");
+        super.onDetach();
     }
 }

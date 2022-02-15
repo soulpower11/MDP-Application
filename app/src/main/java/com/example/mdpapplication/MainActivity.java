@@ -1,13 +1,17 @@
 package com.example.mdpapplication;
 
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.viewpager2.widget.ViewPager2;
 
 
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -34,7 +38,7 @@ public class MainActivity<NameViewModel> extends AppCompatActivity {
     PixelGridView pixelGrid;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -59,7 +63,7 @@ public class MainActivity<NameViewModel> extends AppCompatActivity {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
 
             @Override
-            public void onTabSelected(TabLayout.Tab tab) {
+            public void onTabSelected(@NonNull TabLayout.Tab tab) {
                 viewPager.setCurrentItem(tab.getPosition());
             }
 
@@ -91,13 +95,12 @@ public class MainActivity<NameViewModel> extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.bluetooth) {
             Log.d(TAG, "onOptionsItemSelected: Going to Bluetooth Page");
             Intent intent = new Intent(MainActivity.this, BluetoothActivity.class);
@@ -114,7 +117,7 @@ public class MainActivity<NameViewModel> extends AppCompatActivity {
     }
 
     @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
+    public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
         ArrayList<PixelGridView.Obstacle> obstacles = new ArrayList<>(pixelGrid.getObstacles());
         savedInstanceState.putParcelableArrayList(STATE_OBSTACLE, obstacles);
         savedInstanceState.putIntArray(STATE_ROBOT, pixelGrid.getCurCoord());
@@ -146,12 +149,17 @@ public class MainActivity<NameViewModel> extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
+
         Log.d(TAG, "onStop: ");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        SharedPreferences sharedPref = getSharedPreferences("BluetoothPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.clear().commit();
+
         Log.d(TAG, "onDestroy: ");
     }
 }

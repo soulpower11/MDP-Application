@@ -6,8 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import android.text.Editable;
@@ -25,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MapControlsFragment extends Fragment {
+    private static final String TAG = "MapControlsFragment";
     public static final String EVENT_SEND_MOVEMENT = "com.event.EVENT_SEND_MOVEMENT";
 
     private static final List<String> ValidDirection = Arrays.asList( "N", "E", "S", "W");
@@ -37,11 +37,13 @@ public class MapControlsFragment extends Fragment {
 
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        LayoutInflater lf = getActivity().getLayoutInflater();
-        View view =  lf.inflate(R.layout.fragment_map_controls, container, false); //pass the correct layout name for the fragment
+        return inflater.inflate(R.layout.fragment_map_controls, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
 
         b_reset = view.findViewById(R.id.b_reset);
         b_set = view.findViewById(R.id.b_set);
@@ -64,7 +66,7 @@ public class MapControlsFragment extends Fragment {
             public void beforeTextChanged(CharSequence s, int start,
                                           int count, int after) {}
 
-            public void onTextChanged(CharSequence s, int start,
+            public void onTextChanged(@NonNull CharSequence s, int start,
                                       int before, int count) {
                 //get the String from CharSequence with s.toString() and process it to validation
                 x = s.toString();
@@ -78,7 +80,7 @@ public class MapControlsFragment extends Fragment {
             public void beforeTextChanged(CharSequence s, int start,
                                           int count, int after) {}
 
-            public void onTextChanged(CharSequence s, int start,
+            public void onTextChanged(@NonNull CharSequence s, int start,
                                       int before, int count) {
                 //get the String from CharSequence with s.toString() and process it to validation
                 y = s.toString();
@@ -92,7 +94,7 @@ public class MapControlsFragment extends Fragment {
             public void beforeTextChanged(CharSequence s, int start,
                                           int count, int after) {}
 
-            public void onTextChanged(CharSequence s, int start,
+            public void onTextChanged(@NonNull CharSequence s, int start,
                                       int before, int count) {
                 //get the String from CharSequence with s.toString() and process it to validation
                 robotDirection = s.toString();
@@ -124,9 +126,8 @@ public class MapControlsFragment extends Fragment {
             }
         });
 
-        return view;
     }
-
+    
     private void updateTextInput(){
         int[] curCoords = pixelGrid.getCurCoord();
         x = String.valueOf(curCoords[0]);
@@ -146,11 +147,48 @@ public class MapControlsFragment extends Fragment {
     private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
 
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(Context context, @NonNull Intent intent) {
             // Get extra data included in the Intent
             if (intent.getAction().equals(EVENT_SEND_MOVEMENT)) {
                 updateTextInput();
             }
         }
     };
+
+
+    @Override
+    public void onStart() {
+        Log.d(TAG, "onStart: ");
+        super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        Log.d(TAG, "onResume: ");
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        Log.d(TAG, "onPause: ");
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        Log.d(TAG, "onStop: ");
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy: ");
+        super.onDestroy();
+    }
+
+    @Override
+    public void onDetach() {
+        Log.d(TAG, "onDetach: ");
+        super.onDetach();
+    }
 }
